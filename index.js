@@ -1,6 +1,6 @@
 const express = require('express');
 const cors = require('cors');
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 require('dotenv').config();
 const app = express();
 const port = process.env.PORT || 5000;
@@ -34,12 +34,54 @@ async function run() {
         //All collection
         const usersCollection = client.db("HouseHunter").collection("userCollection");
 
+        //all get api
+        app.get("/userAvailable/:id", async (req, res) => {
+            const result = await usersCollection.findOne({ _id: new ObjectId(req.params.id) });
+            res.send(result)
+        })
+
         //all post api
         app.post("/addNewUser", async (req, res) => {
-            const user = req.body
-            console.log(user)
-            // const result = await usersCollection.insertOne(user)
-            // res.send(result)
+            const user = req.body;
+            const findTheUser = await usersCollection.findOne({ email: user.email });
+            if (findTheUser) {
+                return res.send("The user already registered");
+            }
+            const result = await usersCollection.insertOne(user);
+            res.send(result);
+        });
+        app.post("/loginUser", async (req, res) => {
+            const user = req.body;
+            const findUser = await usersCollection.findOne({ email: user.email });
+            if (findUser) {
+                if (findUser.password === user.password) {
+                    const filter = { email: user.email };
+                    const options = { upsert: false };
+                    const updateDoc = {
+                        $set: {
+                            loggedIn: true
+                        }
+                    }
+                    const result = await usersCollection.updateOne(filter, updateDoc, options);
+                    res.send({ user: findUser, result: result })
+                } else {
+                    return res.send("Password doesn't match")
+                }
+            } else {
+                res.send("User not found")
+            }
+        })
+        app.post("/logOutUser", async (req, res) => {
+            const email = req.body.email
+            const filter = { email: email };
+            const options = { upsert: false };
+            const updateDoc = {
+                $set: {
+                    loggedIn: false
+                }
+            }
+            const result = await usersCollection.updateOne(filter, updateDoc, options);
+            res.send(result)
         })
 
         // Send a ping to confirm a successful connection
