@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 require('dotenv').config();
+var jwt = require('jsonwebtoken');
 const app = express();
 const port = process.env.PORT || 5000;
 
@@ -33,14 +34,24 @@ async function run() {
         await client.connect();
         //All collection
         const usersCollection = client.db("HouseHunter").collection("userCollection");
+        const houseCollection = client.db("HouseHunter").collection("houseCollection");
 
         //all get api
         app.get("/userAvailable/:id", async (req, res) => {
             const result = await usersCollection.findOne({ _id: new ObjectId(req.params.id) });
             res.send(result)
+        });
+        app.get("/houseCollection", async (req, res) => {
+            const result = await houseCollection.find().toArray();
+            res.send(result)
         })
 
         //all post api
+        app.post('/jwt', async (req, res) => {
+            const userEmail = req.body;
+            const token = jwt.sign(userEmail, process.env.ACCESS_TOKEN, { expiresIn: '1h' });
+            res.send(token);
+        });
         app.post("/addNewUser", async (req, res) => {
             const user = req.body;
             const findTheUser = await usersCollection.findOne({ email: user.email });
