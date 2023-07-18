@@ -127,6 +127,20 @@ async function run() {
         app.post("/addNewHouse", verifyJWT, async (req, res) => {
             const result = await houseCollection.insertOne(req.body);
             res.send(result)
+        });
+
+        //all put api
+        app.put("/updateHouseData/:id", async (req, res) => {
+            const updatedData = req.body
+            const filter = { _id: new ObjectId(req.params.id) }
+            const options = { upsert: false }
+            const updateDoc = {
+                $set: {
+                    ...updatedData
+                }
+            }
+            const result = await houseCollection.updateOne(filter, updateDoc, options);
+            res.send(result)
         })
 
         // Send a ping to confirm a successful connection
