@@ -70,6 +70,10 @@ async function run() {
         app.get("/totalHouse", async (req, res) => {
             const result = await houseCollection.countDocuments();
             res.send({ totalHouse: result })
+        });
+        app.get("/ownHouses/:email", verifyJWT, async (req, res) => {
+            const result = await houseCollection.find({ houseOwner: req.params.email }).toArray();
+            res.send(result)
         })
 
         //all post api
@@ -118,6 +122,10 @@ async function run() {
                 }
             }
             const result = await usersCollection.updateOne(filter, updateDoc, options);
+            res.send(result)
+        });
+        app.post("/addNewHouse", verifyJWT, async (req, res) => {
+            const result = await houseCollection.insertOne(req.body);
             res.send(result)
         })
 
