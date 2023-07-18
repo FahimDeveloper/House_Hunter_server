@@ -9,6 +9,21 @@ const port = process.env.PORT || 5000;
 //middleware
 app.use(express.json());
 app.use(cors());
+//verify jwt access middleware
+const verifyJWT = (req, res, next) => {
+    const authorization = req.headers.authorization;
+    if (!authorization) {
+        return res.status(401).send({ error: true, message: 'unauthorized access' })
+    }
+    const token = authorization.split(' ')[1];
+    jwt.verify(token, process.env.ACCESS_TOKEN, (error, decoded) => {
+        if (error) {
+            return res.status(401).send({ error: true, message: 'unauthorized access' })
+        }
+        req.decoded = decoded;
+        next();
+    })
+}
 
 app.get("/", async (req, res) => {
     res.send("House Hunter server running");
@@ -42,8 +57,19 @@ async function run() {
             res.send(result)
         });
         app.get("/houseCollection", async (req, res) => {
-            const result = await houseCollection.find().toArray();
+            const page = parseInt(req.query.page) || 0;
+            const limit = parseInt(req.query.limit) || 10;
+            const skip = page * limit;
+            const result = await houseCollection.find().skip(skip).limit(limit).toArray();
             res.send(result)
+        });
+        app.get("/singleHouseData/:id", verifyJWT, async (req, res) => {
+            const result = await houseCollection.findOne({ _id: new ObjectId(req.params.id) });
+            res.send(result);
+        });
+        app.get("/totalHouse", async (req, res) => {
+            const result = await houseCollection.countDocuments();
+            res.send({ totalHouse: result })
         })
 
         //all post api
