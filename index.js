@@ -130,7 +130,7 @@ async function run() {
         });
 
         //all put api
-        app.put("/updateHouseData/:id", async (req, res) => {
+        app.put("/updateHouseData/:id", verifyJWT, async (req, res) => {
             const updatedData = req.body
             const filter = { _id: new ObjectId(req.params.id) }
             const options = { upsert: false }
