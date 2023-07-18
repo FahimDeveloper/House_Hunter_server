@@ -141,6 +141,12 @@ async function run() {
             }
             const result = await houseCollection.updateOne(filter, updateDoc, options);
             res.send(result)
+        });
+
+        //all delete api
+        app.delete("/deleteHouseData/:id", verifyJWT, async (req, res) => {
+            const result = await houseCollection.deleteOne({ _id: new ObjectId(req.params.id) });
+            res.send(result);
         })
 
         // Send a ping to confirm a successful connection
