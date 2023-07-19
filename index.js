@@ -50,6 +50,7 @@ async function run() {
         //All collection
         const usersCollection = client.db("HouseHunter").collection("userCollection");
         const houseCollection = client.db("HouseHunter").collection("houseCollection");
+        const bookingCollection = client.db("HouseHunter").collection("bookingCollection");
 
         //all get api
         app.get("/userAvailable/:id", async (req, res) => {
@@ -128,6 +129,19 @@ async function run() {
             const result = await houseCollection.insertOne(req.body);
             res.send(result)
         });
+        app.post("/bookingHouse", verifyJWT, async (req, res) => {
+            const data = req.body
+            const findExistBooking = await bookingCollection.findOne({ renter_email: data.renter_email }, { houseId: data.houseId });
+            if (findExistBooking) {
+                return res.send("You are already booked this house");
+            }
+            const findBooking = await bookingCollection.find({ renter_email: data.renter_email }).toArray();
+            if (findBooking.length == 2) {
+                return res.send("You are already booked maximum house");
+            }
+            const result = await bookingCollection.insertOne(data);
+            res.send(result)
+        })
 
         //all put api
         app.put("/updateHouseData/:id", verifyJWT, async (req, res) => {
