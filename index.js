@@ -75,6 +75,10 @@ async function run() {
         app.get("/ownHouses/:email", verifyJWT, async (req, res) => {
             const result = await houseCollection.find({ houseOwner: req.params.email }).toArray();
             res.send(result)
+        });
+        app.get("/ownBookedHouses/:email", verifyJWT, async (req, res) => {
+            const result = await bookingCollection.find({ renter_email: req.params.email }).toArray();
+            res.send(result);
         })
 
         //all post api
@@ -131,7 +135,10 @@ async function run() {
         });
         app.post("/bookingHouse", verifyJWT, async (req, res) => {
             const data = req.body
-            const findExistBooking = await bookingCollection.findOne({ renter_email: data.renter_email }, { houseId: data.houseId });
+            const findExistBooking = await bookingCollection.findOne({
+                renter_email: data.renter_email,
+                houseId: data.houseId
+            });
             if (findExistBooking) {
                 return res.send("You are already booked this house");
             }
@@ -160,6 +167,10 @@ async function run() {
         //all delete api
         app.delete("/deleteHouseData/:id", verifyJWT, async (req, res) => {
             const result = await houseCollection.deleteOne({ _id: new ObjectId(req.params.id) });
+            res.send(result);
+        });
+        app.delete("/removeBookedHouse/:id", verifyJWT, async (req, res) => {
+            const result = await bookingCollection.deleteOne({ _id: new ObjectId(req.params.id) });
             res.send(result);
         })
 
