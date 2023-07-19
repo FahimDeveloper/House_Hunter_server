@@ -79,6 +79,45 @@ async function run() {
         app.get("/ownBookedHouses/:email", verifyJWT, async (req, res) => {
             const result = await bookingCollection.find({ renter_email: req.params.email }).toArray();
             res.send(result);
+        });
+        app.get("/searchHouses", async (req, res) => {
+            const text = req.query.searchText
+            const result = await houseCollection.find({
+                $or: [
+                    { name: { $regex: text, $options: 'i' } },
+                    { city: { $regex: text, $options: 'i' } },
+                    { address: { $regex: text, $options: 'i' } },
+                ]
+            }).toArray();
+            res.send(result);
+        });
+        app.get("/filterInfo", async (req, res) => {
+            const city = await houseCollection.aggregate([
+                { $group: { _id: '$city' } },
+                { $project: { _id: 0, city: '$_id' } }
+            ]).toArray();
+            const bedroom = await houseCollection.aggregate([
+                { $group: { _id: '$bedrooms' } },
+                { $project: { _id: 0, bedrooms: '$_id' } }
+            ]).toArray();
+            const bathroom = await houseCollection.aggregate([
+                { $group: { _id: '$bathrooms' } },
+                { $project: { _id: 0, bathrooms: '$_id' } }
+            ]).toArray();
+            const kitchen = await houseCollection.aggregate([
+                { $group: { _id: '$kitchen' } },
+                { $project: { _id: 0, kitchen: '$_id' } }
+            ]).toArray();
+            const roomSize = await houseCollection.aggregate([
+                { $group: { _id: '$room_size' } },
+                { $project: { _id: 0, room_size: '$_id' } }
+            ]).toArray();
+            const cities = city.map(obj => obj.city);
+            const bedrooms = bedroom.map(obj => obj.bedrooms);
+            const bathrooms = bathroom.map(obj => obj.bathrooms);
+            const kitchens = kitchen.map(obj => obj.kitchen);
+            const roomSizes = roomSize.map(obj => obj.room_size);
+            res.send({ cities: cities, bedrooms: bedrooms, bathrooms: bathrooms, kitchens: kitchens, roomSizes: roomSizes })
         })
 
         //all post api
